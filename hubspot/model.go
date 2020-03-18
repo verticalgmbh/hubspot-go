@@ -78,6 +78,20 @@ func (mdl *Model) GetProperty(name string) *ModelProperty {
 	return mdl.properties[name]
 }
 
+// GetID - get id of an entity
+func (mdl *Model) GetID(entity interface{}) interface{} {
+	if mdl.id == nil {
+		return nil
+	}
+
+	refvalue := reflect.ValueOf(entity)
+	if refvalue.Kind() == reflect.Ptr {
+		refvalue = refvalue.Elem()
+	}
+
+	return mdl.id.GetValue(refvalue)
+}
+
 // SetValue - set value from a json response to an entity which is based on this model
 func (prop *ModelProperty) SetValue(data map[string]interface{}, valuename string, entity reflect.Value) {
 	value, ok := data[valuename]
@@ -96,4 +110,14 @@ func (prop *ModelProperty) SetValue(data map[string]interface{}, valuename strin
 	}
 
 	field.Set(reflect.ValueOf(convert(value, field.Type())))
+}
+
+// GetValue - get value of a property
+func (prop *ModelProperty) GetValue(entity reflect.Value) interface{} {
+	field := entity.FieldByName(prop.StructField)
+	if !field.IsValid() {
+		return nil
+	}
+
+	return field.Interface()
 }

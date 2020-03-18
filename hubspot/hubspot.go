@@ -28,7 +28,7 @@ func extractRequestProperties(response interface{}) map[string]interface{} {
 	return properties
 }
 
-func getProperties(data interface{}, mdl *Model) []map[string]interface{} {
+func getProperties(data interface{}, nameproperty string, mdl *Model) []map[string]interface{} {
 	var properties []map[string]interface{}
 
 	refvalue := reflect.ValueOf(data)
@@ -49,7 +49,7 @@ func getProperties(data interface{}, mdl *Model) []map[string]interface{} {
 		}
 
 		item := make(map[string]interface{})
-		item["property"] = prop.HubspotName
+		item[nameproperty] = prop.HubspotName
 		item["value"] = propvalue.Interface()
 		properties = append(properties, item)
 	}
@@ -57,8 +57,8 @@ func getProperties(data interface{}, mdl *Model) []map[string]interface{} {
 	return properties
 }
 
-func createPropertiesRequest(data interface{}, mdl *Model) map[string]interface{} {
+func createPropertiesRequest(data interface{}, nameproperty string, mdl *Model) map[string]interface{} {
 	request := make(map[string]interface{})
-	request["properties"] = getProperties(data, mdl)
+	request["properties"] = getProperties(data, nameproperty, mdl)
 	return request
 }

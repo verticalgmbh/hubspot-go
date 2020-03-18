@@ -60,7 +60,7 @@ func (api *Contacts) toEntity(response map[string]interface{}) interface{} {
 
 // CreateOrUpdate - creates or updates a contact in hubspot
 func (api *Contacts) CreateOrUpdate(email string, contact interface{}) (interface{}, error) {
-	request := createPropertiesRequest(contact, api.model)
+	request := createPropertiesRequest(contact, "property", api.model)
 	response, err := api.rest.Post("contacts/v1/contact/createOrUpdate/email/"+email, request)
 	if err != nil {
 		return 0, err
@@ -71,7 +71,7 @@ func (api *Contacts) CreateOrUpdate(email string, contact interface{}) (interfac
 
 // Update - updates a contact in hubspot
 func (api *Contacts) Update(id int64, contact interface{}) error {
-	request := createPropertiesRequest(contact, api.model)
+	request := createPropertiesRequest(contact, "property", api.model)
 	_, err := api.rest.Post(fmt.Sprintf("contacts/v1/contact/vid/%d/profile", id), request)
 	return err
 }
