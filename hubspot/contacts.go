@@ -103,11 +103,11 @@ func (api *Contacts) GetByEmail(email string) (interface{}, error) {
 func (api *Contacts) getListParameters(page *Page, props []string) []*Parameter {
 	var parameters []*Parameter
 	if page != nil {
-		if page.Count == 0 {
+		if page.Count > 0 {
 			parameters = append(parameters, NewParameter("count", fmt.Sprintf("%d", page.Count)))
 		}
 
-		if page.Offset == 0 {
+		if page.Offset > 0 {
 			parameters = append(parameters, NewParameter("vidOffset", fmt.Sprintf("%d", page.Offset)))
 		}
 	}

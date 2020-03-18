@@ -150,12 +150,60 @@ func TestListDefaultPage(t *testing.T) {
 	require.Equal(t, "GET contacts/v1/lists/all/contacts/all?hapikey=xyz&property=name&property=email&property=humanage", rest.LastRequest())
 
 	require.True(t, page.HasMore)
-	require.Equal(t, 12345, page.Offset)
+	require.Equal(t, int64(12345), page.Offset)
 	require.Equal(t, 2, len(page.Data))
 
+	person := page.Data[0].(*Person)
 	require.Equal(t, int64(61574), person.ID)
 	require.Equal(t, "Peter", person.Name)
 	require.Equal(t, "peter@lack.de", person.EMail)
 	require.Equal(t, 28, person.Age)
 
+	person = page.Data[1].(*Person)
+	require.Equal(t, int64(51157), person.ID)
+	require.Equal(t, "Monika", person.Name)
+	require.Equal(t, "monika@left.de", person.EMail)
+	require.Equal(t, 24, person.Age)
+}
+
+func TestListCustomPage(t *testing.T) {
+	rest := &TestRest{}
+	rest.Response = map[string]interface{}{
+		"has-more": false,
+		"contacts": []map[string]interface{}{
+			map[string]interface{}{
+				"vid": 61574,
+				"properties": map[string]interface{}{
+					"name":     map[string]interface{}{"value": "Peter"},
+					"email":    map[string]interface{}{"value": "peter@lack.de"},
+					"humanage": map[string]interface{}{"value": 28}}},
+			map[string]interface{}{
+				"vid": 51157,
+				"properties": map[string]interface{}{
+					"name":     map[string]interface{}{"value": "Monika"},
+					"email":    map[string]interface{}{"value": "monika@left.de"},
+					"humanage": map[string]interface{}{"value": 24}}}}}
+
+	contacts := NewContacts(rest, NewModel(reflect.TypeOf(Person{})))
+
+	page, err := contacts.ListPage(NewPage(int64(544), 54), "name", "email", "humanage")
+
+	require.NoError(t, err)
+	require.Equal(t, "GET contacts/v1/lists/all/contacts/all?hapikey=xyz&count=54&vidOffset=544&property=name&property=email&property=humanage", rest.LastRequest())
+
+	require.False(t, page.HasMore)
+	require.Equal(t, int64(0), page.Offset)
+	require.Equal(t, 2, len(page.Data))
+
+	person := page.Data[0].(*Person)
+	require.Equal(t, int64(61574), person.ID)
+	require.Equal(t, "Peter", person.Name)
+	require.Equal(t, "peter@lack.de", person.EMail)
+	require.Equal(t, 28, person.Age)
+
+	person = page.Data[1].(*Person)
+	require.Equal(t, int64(51157), person.ID)
+	require.Equal(t, "Monika", person.Name)
+	require.Equal(t, "monika@left.de", person.EMail)
+	require.Equal(t, 24, person.Age)
 }
