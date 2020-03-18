@@ -32,6 +32,7 @@ func NewContacts(rest IRestClient, model *Model) *Contacts {
 
 func (api *Contacts) toEntity(response map[string]interface{}) interface{} {
 	entity := reflect.New(api.model.datatype)
+	entity = entity.Elem()
 
 	if api.model.id != nil {
 		api.model.id.SetValue(response, "vid", entity)
@@ -54,18 +55,18 @@ func (api *Contacts) toEntity(response map[string]interface{}) interface{} {
 		prop.SetValue(property, "value", entity)
 	}
 
-	return entity
+	return entity.Addr().Interface()
 }
 
 // CreateOrUpdate - creates or updates a contact in hubspot
-func (api *Contacts) CreateOrUpdate(email string, contact interface{}) (int64, error) {
+func (api *Contacts) CreateOrUpdate(email string, contact interface{}) (interface{}, error) {
 	request := createPropertiesRequest(contact, api.model)
 	response, err := api.rest.Post("contacts/v1/contact/createOrUpdate/email/"+email, request)
 	if err != nil {
 		return 0, err
 	}
 
-	return cast.ToInt64(response["vid"]), nil
+	return api.toEntity(response), nil
 }
 
 // Update - updates a contact in hubspot

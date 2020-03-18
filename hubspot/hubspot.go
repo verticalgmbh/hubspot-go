@@ -1,6 +1,32 @@
 package hubspot
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/spf13/cast"
+)
+
+// extractRequestProperties
+// extracts properties of a json object request sent to hubspot
+func extractRequestProperties(response interface{}) map[string]interface{} {
+	properties := make(map[string]interface{})
+
+	robj, ok := response.(map[string]interface{})
+	if !ok {
+		return properties
+	}
+
+	proparray, ok := robj["properties"].([]map[string]interface{})
+	if !ok {
+		return properties
+	}
+
+	for _, property := range proparray {
+		properties[cast.ToString(property["property"])] = property["value"]
+	}
+
+	return properties
+}
 
 func getProperties(data interface{}, mdl *Model) []map[string]interface{} {
 	var properties []map[string]interface{}

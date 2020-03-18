@@ -85,10 +85,15 @@ func (prop *ModelProperty) SetValue(data map[string]interface{}, valuename strin
 		return
 	}
 
-	field := entity.FieldByName(prop.StructField)
-	if field.IsZero() {
+	name := entity.Type().Name()
+	if len(name) == 0 {
 		return
 	}
 
-	field.Set(reflect.ValueOf(value))
+	field := entity.FieldByName(prop.StructField)
+	if !field.IsValid() {
+		return
+	}
+
+	field.Set(reflect.ValueOf(convert(value, field.Type())))
 }
