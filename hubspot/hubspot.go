@@ -8,7 +8,7 @@ import (
 
 // extractRequestProperties
 // extracts properties of a json object request sent to hubspot
-func extractRequestProperties(response interface{}) map[string]interface{} {
+func extractRequestProperties(nameproperty string, response interface{}) map[string]interface{} {
 	properties := make(map[string]interface{})
 
 	robj, ok := response.(map[string]interface{})
@@ -22,7 +22,7 @@ func extractRequestProperties(response interface{}) map[string]interface{} {
 	}
 
 	for _, property := range proparray {
-		properties[cast.ToString(property["property"])] = property["value"]
+		properties[cast.ToString(property[nameproperty])] = property["value"]
 	}
 
 	return properties

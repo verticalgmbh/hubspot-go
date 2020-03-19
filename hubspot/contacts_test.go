@@ -36,7 +36,7 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "POST contacts/v1/contact/createOrUpdate/email/peter@lack.de?hapikey=xyz", rest.LastRequest())
 
-	request := extractRequestProperties(rest.LastBody())
+	request := extractRequestProperties("property", rest.LastBody())
 	require.Equal(t, "Peter", request["name"])
 	require.Equal(t, "peter@lack.de", request["email"])
 	require.Equal(t, 28, request["humanage"])
@@ -62,7 +62,7 @@ func TestUpdate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "POST contacts/v1/contact/vid/61574/profile?hapikey=xyz", rest.LastRequest())
 
-	request := extractRequestProperties(rest.LastBody())
+	request := extractRequestProperties("property", rest.LastBody())
 	require.Equal(t, "Peter", request["name"])
 	require.Equal(t, "peter@lack.de", request["email"])
 	require.Equal(t, 28, request["humanage"])
