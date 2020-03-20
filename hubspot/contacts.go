@@ -9,7 +9,7 @@ import (
 
 // IContacts - interface for the hubspot contact api
 type IContacts interface {
-	CreateOrUpdate(email string, contact interface{}) (int64, error)
+	CreateOrUpdate(email string, contact interface{}) (interface{}, error)
 	Update(contact interface{}) error
 	Delete(id int64) error
 	ListPage(page *Page, props ...string) (*PageResponse, error)
