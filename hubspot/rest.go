@@ -39,6 +39,13 @@ func NewParameter(key string, value string) *Parameter {
 		Value: value}
 }
 
+// NewRest - creates a new rest client
+func NewRest(address string, apikey string) *RestClient {
+	return &RestClient{
+		address: address,
+		apikey:  apikey}
+}
+
 func (client *RestClient) buildBaseURL(address string, params ...*Parameter) *strings.Builder {
 	var builder strings.Builder
 	builder.WriteString(client.address)
