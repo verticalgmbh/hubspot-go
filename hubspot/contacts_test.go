@@ -15,6 +15,15 @@ type Person struct {
 	Age     int `hubspot:"name=humanage"`
 }
 
+func TestContactsInterfaceImpl(t *testing.T) {
+	var contacts IContacts = NewContacts(&TestRest{}, NewModel(reflect.TypeOf(Company{})))
+
+	// just a noop to make sure go compiler doesn't babble about the var not being used
+	if contacts != nil {
+		return
+	}
+}
+
 func TestCreate(t *testing.T) {
 	rest := &TestRest{}
 	rest.Response = map[string]interface{}{

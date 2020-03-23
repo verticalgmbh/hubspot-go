@@ -1,6 +1,7 @@
 package hubspot
 
 import (
+	"log"
 	"reflect"
 	"strings"
 )
@@ -9,6 +10,8 @@ import (
 type Model struct {
 	id         *ModelProperty
 	deleted    *ModelProperty
+	companies  *ModelProperty // companies linked to data (used for deals)
+	contacts   *ModelProperty // contacts linked to data (used for deals)
 	properties map[string]*ModelProperty
 	datatype   reflect.Type
 }
@@ -56,6 +59,20 @@ func NewModel(entitytype reflect.Type) *Model {
 				property.NoExport = true
 			case "noexport":
 				property.NoExport = true
+			case "contacts":
+				if field.Type != reflect.TypeOf([]int64{}) {
+					log.Panicf("Deal Contacts field must be of type '[]int64'")
+				}
+
+				model.contacts = property
+				property.NoExport = true
+			case "companies":
+				if field.Type != reflect.TypeOf([]int64{}) {
+					log.Panicf("Deal Companies field must be of type '[]int64'")
+				}
+
+				model.companies = property
+				property.NoExport = true
 			}
 		}
 
@@ -84,12 +101,25 @@ func (mdl *Model) GetID(entity interface{}) interface{} {
 		return nil
 	}
 
-	refvalue := reflect.ValueOf(entity)
-	if refvalue.Kind() == reflect.Ptr {
-		refvalue = refvalue.Elem()
+	return mdl.id.getHubspotValue(entity)
+}
+
+// GetContacts - get linked contacts of a deal
+func (mdl *Model) GetContacts(entity interface{}) []int64 {
+	if mdl.contacts == nil {
+		return nil
 	}
 
-	return mdl.id.GetValue(refvalue)
+	return mdl.contacts.getHubspotValue(entity).([]int64)
+}
+
+// GetCompanies - get linked companies of a deal
+func (mdl *Model) GetCompanies(entity interface{}) []int64 {
+	if mdl.companies == nil {
+		return nil
+	}
+
+	return mdl.companies.getHubspotValue(entity).([]int64)
 }
 
 // SetValue - set value from a json response to an entity which is based on this model
@@ -110,6 +140,15 @@ func (prop *ModelProperty) SetValue(data map[string]interface{}, valuename strin
 	}
 
 	field.Set(reflect.ValueOf(convert(value, field.Type())))
+}
+
+func (prop *ModelProperty) getHubspotValue(entity interface{}) interface{} {
+	refvalue := reflect.ValueOf(entity)
+	if refvalue.Kind() == reflect.Ptr {
+		refvalue = refvalue.Elem()
+	}
+
+	return prop.GetValue(refvalue)
 }
 
 // GetValue - get value of a property

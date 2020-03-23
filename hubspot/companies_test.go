@@ -15,6 +15,15 @@ type Company struct {
 	VAT     string `hubspot:"name=umsatzsteuerid"`
 }
 
+func TestCompanyInterfaceImpl(t *testing.T) {
+	var companies ICompanies = NewCompanies(&TestRest{}, NewModel(reflect.TypeOf(Company{})))
+
+	// just a noop to make sure go compiler doesn't babble about the var not being used
+	if companies != nil {
+		return
+	}
+}
+
 func TestCreateCompany(t *testing.T) {
 	rest := &TestRest{}
 	rest.Response = map[string]interface{}{
