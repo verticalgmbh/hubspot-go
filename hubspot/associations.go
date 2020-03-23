@@ -73,6 +73,11 @@ type Associations struct {
 	rest IRestClient // client used to send requests
 }
 
+// NewAssociations - creates a new associations api
+func NewAssociations(rest IRestClient) *Associations {
+	return &Associations{rest: rest}
+}
+
 // Create - creates a new association of two objects in hubspot
 func (api *Associations) Create(fromid int64, toid int64, asstype AssociationType) error {
 	request := map[string]interface{}{

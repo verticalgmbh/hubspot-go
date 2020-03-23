@@ -26,6 +26,13 @@ type Deals struct {
 	rest  IRestClient // client used to send requests
 }
 
+// NewDeals - creates a new deals api
+func NewDeals(rest IRestClient, model *Model) *Deals {
+	return &Deals{
+		rest:  rest,
+		model: model}
+}
+
 func (api *Deals) toEntity(response map[string]interface{}) interface{} {
 	entity := reflect.New(api.model.datatype)
 	entity = entity.Elem()
