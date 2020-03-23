@@ -28,6 +28,26 @@ func extractRequestProperties(nameproperty string, response interface{}) map[str
 	return properties
 }
 
+func propertiesToEntity(response map[string]interface{}, model *Model) interface{} {
+	entity := reflect.New(model.datatype)
+	entity = entity.Elem()
+
+	properties, ok := response["properties"].(map[string]interface{})
+	if !ok {
+		return entity.Addr().Interface()
+	}
+
+	for _, prop := range model.properties {
+		property, ok := properties[prop.HubspotName].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		prop.SetValue(property, "value", entity)
+	}
+
+	return entity.Addr().Interface()
+}
+
 func getProperties(data interface{}, nameproperty string, mdl *Model) []map[string]interface{} {
 	var properties []map[string]interface{}
 

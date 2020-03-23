@@ -47,7 +47,7 @@ func (api *Companies) toEntity(response map[string]interface{}) interface{} {
 
 	properties, ok := response["properties"].(map[string]interface{})
 	if !ok {
-		return entity
+		return entity.Addr().Interface()
 	}
 
 	for _, prop := range api.model.properties {

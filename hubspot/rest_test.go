@@ -1,11 +1,24 @@
 package hubspot
 
 import (
+	"encoding/json"
+	"log"
 	"net/url"
 	"strings"
 
 	"github.com/pkg/errors"
 )
+
+func readTestResponse(response string) map[string]interface{} {
+	result := make(map[string]interface{})
+	decoder := json.NewDecoder(strings.NewReader(response))
+	err := decoder.Decode(&result)
+	if err != nil {
+		log.Panic("Error in json response")
+	}
+
+	return result
+}
 
 func getBodyValue(body interface{}, path string) interface{} {
 	current := body
@@ -83,6 +96,7 @@ func (rest *TestRest) Put(url string, request interface{}, params ...*Parameter)
 	rest.log("PUT "+url, request, params...)
 	return rest.Response, nil
 }
+
 func (rest *TestRest) Delete(url string) error {
 	rest.log("DELETE "+url, nil)
 	return nil
