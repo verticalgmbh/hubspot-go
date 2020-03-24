@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var responseContactCreateOrUpdate string = `{"vid":3234574,"isNew":false}`
+
 type Person struct {
 	ID      int64 `hubspot:"id"`
 	Deleted bool  `hubspot:"deleted"`
@@ -24,14 +26,9 @@ func TestContactsInterfaceImpl(t *testing.T) {
 	}
 }
 
-func TestCreate(t *testing.T) {
+func TestCreateOrUpdate(t *testing.T) {
 	rest := &TestRest{}
-	rest.Response = map[string]interface{}{
-		"vid": 61574,
-		"properties": map[string]interface{}{
-			"name":     map[string]interface{}{"value": "Peter"},
-			"email":    map[string]interface{}{"value": "peter@lack.de"},
-			"humanage": map[string]interface{}{"value": 28}}}
+	rest.Response = readTestResponse(responseContactCreateOrUpdate)
 
 	contacts := NewContacts(rest, NewModel(reflect.TypeOf(Person{})))
 
@@ -41,19 +38,9 @@ func TestCreate(t *testing.T) {
 		Age:   28}
 
 	created, err := contacts.CreateOrUpdate("peter@lack.de", person)
-	createdperson := created.(*Person)
 	require.NoError(t, err)
 	require.Equal(t, "POST contacts/v1/contact/createOrUpdate/email/peter@lack.de?hapikey=xyz", rest.LastRequest())
-
-	request := extractRequestProperties("property", rest.LastBody())
-	require.Equal(t, "Peter", request["name"])
-	require.Equal(t, "peter@lack.de", request["email"])
-	require.Equal(t, 28, request["humanage"])
-
-	require.Equal(t, int64(61574), createdperson.ID)
-	require.Equal(t, "Peter", createdperson.Name)
-	require.Equal(t, "peter@lack.de", createdperson.EMail)
-	require.Equal(t, 28, createdperson.Age)
+	require.Equal(t, int64(3234574), created)
 }
 
 func TestUpdate(t *testing.T) {

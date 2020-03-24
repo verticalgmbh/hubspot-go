@@ -89,7 +89,7 @@ func (api *Deals) Create(deal interface{}) (interface{}, error) {
 
 	request["properties"] = getProperties(deal, "name", api.model)
 
-	response, err := api.rest.Post("deals/v1/deal/", request)
+	response, err := api.rest.Post("deals/v1/deal", request)
 	if err != nil {
 		return nil, err
 	}

@@ -83,15 +83,62 @@ func TestAssListDefault(t *testing.T) {
 }
 
 func TestAssListPage(t *testing.T) {
-	rest := &TestRest{
-		Response: readTestResponse(responseAssociationsList)}
+	rest := &TestRest{}
 	api := NewAssociations(rest)
-	response, err := api.List(2883, AssociationCompanyToTicket, NewPage(230, 0))
+	_, err := api.List(2883, AssociationCompanyToTicket, NewPage(230, 0))
 	require.NoError(t, err)
 	require.Equal(t, "GET crm-associations/v1/associations/2883/HUBSPOT_DEFINED/25?hapikey=xyz&offset=230", rest.LastRequest())
+}
 
-	require.False(t, response.HasMore)
-	require.Equal(t, int64(0), response.Offset)
-	require.Equal(t, 1, len(response.Data))
-	require.Equal(t, int64(184896670), response.Data[0])
+func TestAssListPageLimit(t *testing.T) {
+	rest := &TestRest{}
+	api := NewAssociations(rest)
+	_, err := api.List(2883, AssociationCompanyToTicket, NewPage(233, 40))
+	require.NoError(t, err)
+	require.Equal(t, "GET crm-associations/v1/associations/2883/HUBSPOT_DEFINED/25?hapikey=xyz&offset=233&limit=40", rest.LastRequest())
+}
+
+func TestAssDelete(t *testing.T) {
+	rest := &TestRest{}
+	api := NewAssociations(rest)
+	err := api.Delete(50, 28, AssociationAdvisorToCompany)
+	require.NoError(t, err)
+	require.Equal(t, "PUT crm-associations/v1/associations/delete?hapikey=xyz", rest.LastRequest())
+
+	response, ok := rest.LastBody().(map[string]interface{})
+	require.True(t, ok)
+	require.Equal(t, int64(50), response["fromObjectId"])
+	require.Equal(t, int64(28), response["toObjectId"])
+	require.Equal(t, "HUBSPOT_DEFINED", response["category"])
+	require.Equal(t, 33, response["definitionId"])
+}
+
+func TestAssDeleteBulk(t *testing.T) {
+	rest := &TestRest{}
+	api := NewAssociations(rest)
+	err := api.DeleteBulk([]*Association{
+		&Association{
+			From: 13,
+			To:   29,
+			Type: AssociationContactToCompany},
+		&Association{
+			From: 92,
+			To:   1221,
+			Type: AssociationCompanyToDeal}})
+
+	require.NoError(t, err)
+	require.Equal(t, "PUT crm-associations/v1/associations/delete-batch?hapikey=xyz", rest.LastRequest())
+
+	response, ok := rest.LastBody().([]map[string]interface{})
+	require.True(t, ok)
+
+	require.Equal(t, int64(13), response[0]["fromObjectId"])
+	require.Equal(t, int64(29), response[0]["toObjectId"])
+	require.Equal(t, "HUBSPOT_DEFINED", response[0]["category"])
+	require.Equal(t, 1, response[0]["definitionId"])
+
+	require.Equal(t, int64(92), response[1]["fromObjectId"])
+	require.Equal(t, int64(1221), response[1]["toObjectId"])
+	require.Equal(t, "HUBSPOT_DEFINED", response[1]["category"])
+	require.Equal(t, 6, response[1]["definitionId"])
 }

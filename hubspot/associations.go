@@ -65,7 +65,7 @@ type IAssociations interface {
 	CreateBulk(data []*Association) error
 	List(objectid int64, asstype AssociationType, page *Page) (*PageResponse, error)
 	Delete(fromid int64, toid int64, asstype AssociationType) error
-	DeleteBulk(data []Association) error
+	DeleteBulk(data []*Association) error
 }
 
 // Associations - hubspot associations api using rest
@@ -151,7 +151,7 @@ func (api *Associations) Delete(fromid int64, toid int64, asstype AssociationTyp
 }
 
 // DeleteBulk - deletes multiple associations at once
-func (api *Associations) DeleteBulk(data []Association) error {
+func (api *Associations) DeleteBulk(data []*Association) error {
 	var request []map[string]interface{} = make([]map[string]interface{}, len(data))
 	for index, ass := range data {
 		request[index] = map[string]interface{}{

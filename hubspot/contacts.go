@@ -9,7 +9,7 @@ import (
 
 // IContacts - interface for the hubspot contact api
 type IContacts interface {
-	CreateOrUpdate(email string, contact interface{}) (interface{}, error)
+	CreateOrUpdate(email string, contact interface{}) (int64, error)
 	Update(id int64, contact interface{}) error
 	Delete(id int64) error
 	ListPage(page *Page, props ...string) (*PageResponse, error)
@@ -59,14 +59,14 @@ func (api *Contacts) toEntity(response map[string]interface{}) interface{} {
 }
 
 // CreateOrUpdate - creates or updates a contact in hubspot
-func (api *Contacts) CreateOrUpdate(email string, contact interface{}) (interface{}, error) {
+func (api *Contacts) CreateOrUpdate(email string, contact interface{}) (int64, error) {
 	request := createPropertiesRequest(contact, "property", api.model)
 	response, err := api.rest.Post("contacts/v1/contact/createOrUpdate/email/"+email, request)
 	if err != nil {
 		return 0, err
 	}
 
-	return api.toEntity(response), nil
+	return cast.ToInt64E(response["vid"])
 }
 
 // Update - updates a contact in hubspot
