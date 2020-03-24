@@ -2,13 +2,38 @@ package hubspot
 
 import (
 	"reflect"
+	"time"
+	"unicode"
 
 	"github.com/spf13/cast"
 )
 
+var timetype reflect.Type = reflect.TypeOf(time.Time{})
+
 func convert(value interface{}, t reflect.Type) interface{} {
 	if reflect.TypeOf(value) == t {
 		return value
+	}
+
+	if t == timetype {
+		switch v := value.(type) {
+		case string:
+			if len(v) >= 0 {
+				alldigits := true
+				for _, char := range v {
+					if !unicode.IsDigit(char) {
+						alldigits = false
+						break
+					}
+				}
+
+				if alldigits {
+					// hubspot sends unix time in milliseconds
+					return cast.ToTime(cast.ToInt64(v) / 1000).UTC()
+				}
+			}
+		}
+		return cast.ToTime(value)
 	}
 
 	switch t.Kind() {
@@ -40,6 +65,14 @@ func convert(value interface{}, t reflect.Type) interface{} {
 		return cast.ToFloat64(value)
 	case reflect.String:
 		return cast.ToString(value)
+	case reflect.Slice:
+		elementtype := t.Elem()
+		array := reflect.MakeSlice(t, 0, 8)
+		sourcevalue := reflect.ValueOf(value)
+		for i := 0; i < sourcevalue.Len(); i++ {
+			array = reflect.Append(array, reflect.ValueOf(convert(sourcevalue.Index(i).Interface(), elementtype)))
+		}
+		return array.Interface()
 	}
 
 	return nil
