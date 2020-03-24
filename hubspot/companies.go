@@ -110,7 +110,7 @@ func (api *Companies) getListParameters(page *Page, countproperty string, props 
 	}
 
 	for _, prop := range props {
-		parameters = append(parameters, NewParameter("property", prop))
+		parameters = append(parameters, NewParameter("properties", prop))
 	}
 
 	return parameters
