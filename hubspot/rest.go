@@ -152,6 +152,7 @@ func (client *RestClient) Put(address string, request interface{}, params ...*Pa
 		return nil, err
 	}
 
+	putrequest.Header.Add("Content-Type", "application/json")
 	response, err := httpclient.Do(putrequest)
 	if err != nil {
 		return nil, err
