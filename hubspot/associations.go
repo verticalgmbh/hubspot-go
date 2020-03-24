@@ -62,7 +62,7 @@ type Association struct {
 // IAssociations - interface for associations api
 type IAssociations interface {
 	Create(fromid int64, toid int64, asstype AssociationType) error
-	CreateBulk(data []Association) error
+	CreateBulk(data []*Association) error
 	List(objectid int64, asstype AssociationType, page *Page) (*PageResponse, error)
 	Delete(fromid int64, toid int64, asstype AssociationType) error
 	DeleteBulk(data []Association) error
@@ -86,12 +86,12 @@ func (api *Associations) Create(fromid int64, toid int64, asstype AssociationTyp
 		"category":     hubspotDefinedType,
 		"definitionId": int(asstype)}
 
-	_, err := api.rest.Post("crm-associations/v1/associations", request)
+	_, err := api.rest.Put("crm-associations/v1/associations", request)
 	return err
 }
 
 // CreateBulk - creates multiple associations in one call
-func (api *Associations) CreateBulk(data []Association) error {
+func (api *Associations) CreateBulk(data []*Association) error {
 	var request []map[string]interface{} = make([]map[string]interface{}, len(data))
 	for index, ass := range data {
 		request[index] = map[string]interface{}{
@@ -101,7 +101,7 @@ func (api *Associations) CreateBulk(data []Association) error {
 			"definitionId": int(ass.Type)}
 	}
 
-	_, err := api.rest.Post("crm-associations/v1/associations/create-batch", request)
+	_, err := api.rest.Put("crm-associations/v1/associations/create-batch", request)
 	return err
 }
 
@@ -120,7 +120,9 @@ func (api *Associations) List(objectid int64, asstype AssociationType, page *Pag
 
 	contacts, ok := response["results"].([]interface{})
 	if ok {
-		pr.Data = contacts
+		for _, contact := range contacts {
+			pr.Data = append(pr.Data, cast.ToInt64(contact))
+		}
 	}
 
 	return pr, nil

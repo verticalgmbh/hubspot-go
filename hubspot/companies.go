@@ -75,7 +75,7 @@ func (api *Companies) Create(company interface{}) (interface{}, error) {
 // Update - updates a company in hubspot
 func (api *Companies) Update(id int64, company interface{}) (interface{}, error) {
 	request := createPropertiesRequest(company, "name", api.model)
-	response, err := api.rest.Post(fmt.Sprintf("companies/v2/companies/%d", id), request)
+	response, err := api.rest.Put(fmt.Sprintf("companies/v2/companies/%d", id), request)
 	if err != nil {
 		return nil, err
 	}

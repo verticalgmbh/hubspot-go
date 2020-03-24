@@ -66,12 +66,12 @@ func (client *RestClient) buildBaseURL(address string, params ...*Parameter) *st
 
 func (client *RestClient) checkError(response *http.Response) error {
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		if response.ContentLength == 0 {
+		if response.ContentLength <= 0 {
 			return errors.Errorf("%d: %s", response.StatusCode, response.Status)
 		}
 
 		buf := new(bytes.Buffer)
-		buf.ReadFrom(response.Request.Body)
+		buf.ReadFrom(response.Body)
 		return errors.Errorf("%s", buf.String())
 	}
 
