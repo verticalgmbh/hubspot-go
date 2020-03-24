@@ -81,3 +81,17 @@ func TestAssListDefault(t *testing.T) {
 	require.Equal(t, 1, len(response.Data))
 	require.Equal(t, int64(184896670), response.Data[0])
 }
+
+func TestAssListPage(t *testing.T) {
+	rest := &TestRest{
+		Response: readTestResponse(responseAssociationsList)}
+	api := NewAssociations(rest)
+	response, err := api.List(2883, AssociationCompanyToTicket, NewPage(230, 0))
+	require.NoError(t, err)
+	require.Equal(t, "GET crm-associations/v1/associations/2883/HUBSPOT_DEFINED/25?hapikey=xyz&offset=230", rest.LastRequest())
+
+	require.False(t, response.HasMore)
+	require.Equal(t, int64(0), response.Offset)
+	require.Equal(t, 1, len(response.Data))
+	require.Equal(t, int64(184896670), response.Data[0])
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 )
 
@@ -129,9 +130,14 @@ func (api *Companies) List(page *Page, props ...string) (*PageResponse, error) {
 		pr.Offset = cast.ToInt64(response["offset"])
 	}
 
-	contacts, ok := response["companies"].([]map[string]interface{})
+	contacts, ok := response["companies"].([]interface{})
 	if ok {
-		for _, contact := range contacts {
+		for _, contactobj := range contacts {
+			contact, ok := contactobj.(map[string]interface{})
+			if !ok {
+				return nil, errors.Errorf("Unexpected response structure from hubspot")
+			}
+
 			pr.Data = append(pr.Data, api.toEntity(contact))
 		}
 	}

@@ -107,7 +107,17 @@ func (api *Associations) CreateBulk(data []*Association) error {
 
 // List - lists associations of a type for an object
 func (api *Associations) List(objectid int64, asstype AssociationType, page *Page) (*PageResponse, error) {
-	response, err := api.rest.Get(fmt.Sprintf("crm-associations/v1/associations/%d/HUBSPOT_DEFINED/%d", objectid, int(asstype)))
+	params := []*Parameter{}
+	if page != nil {
+		if page.Offset > 0 {
+			params = append(params, NewParameter("offset", fmt.Sprintf("%d", page.Offset)))
+		}
+		if page.Count > 0 {
+			params = append(params, NewParameter("limit", fmt.Sprintf("%d", page.Count)))
+		}
+	}
+
+	response, err := api.rest.Get(fmt.Sprintf("crm-associations/v1/associations/%d/HUBSPOT_DEFINED/%d", objectid, int(asstype)), params...)
 	if err != nil {
 		return nil, err
 	}
