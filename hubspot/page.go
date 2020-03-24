@@ -23,3 +23,33 @@ func NewPage(offset int64, count int) *Page {
 		Offset: offset,
 		Count:  count}
 }
+
+// FindInPages - finds an item in results of a paging mechanism
+func FindInPages(pager func(*Page) (*PageResponse, error), predicate func(data interface{}) (bool, error)) (interface{}, error) {
+	var page *Page
+	for {
+		response, err := pager(page)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, item := range response.Data {
+			ok, err := predicate(item)
+			if err != nil {
+				return nil, err
+			}
+
+			if ok {
+				return item, nil
+			}
+		}
+
+		if response.HasMore {
+			page = NewPage(response.Offset, 0)
+		} else {
+			break
+		}
+	}
+
+	return nil, nil
+}
