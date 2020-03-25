@@ -13,9 +13,9 @@ type IDeals interface {
 	Create(deal interface{}) (interface{}, error)
 	Update(id int64, deal interface{}) (interface{}, error)
 	UpdateBulk(deals []interface{}) error
-	List(page *Page, props ...string) (*PageResponse, error)
-	RecentlyModified(page *Page, since *time.Time) (*PageResponse, error)
-	RecentlyCreated(page *Page, since *time.Time) (*PageResponse, error)
+	List(page *Page, includeassociations bool, props ...string) (*PageResponse, error)
+	RecentlyModified(page *Page, since *time.Time, includeassociations bool) (*PageResponse, error)
+	RecentlyCreated(page *Page, since *time.Time, includeassociations bool) (*PageResponse, error)
 	Delete(id int64) error
 	Get(id int64) (interface{}, error)
 }
@@ -121,7 +121,7 @@ func (api *Deals) UpdateBulk(deals []interface{}) error {
 	return err
 }
 
-func (api *Deals) getListParameters(page *Page, countproperty string, props []string) []*Parameter {
+func (api *Deals) getListParameters(page *Page, countproperty string, includeassociations bool, props []string) []*Parameter {
 	var parameters []*Parameter
 	if page != nil {
 		if page.Count > 0 {
@@ -133,8 +133,11 @@ func (api *Deals) getListParameters(page *Page, countproperty string, props []st
 		}
 	}
 
+	if includeassociations {
+		parameters = append(parameters, NewParameter("includeAssociations", "true"))
+	}
 	for _, prop := range props {
-		parameters = append(parameters, NewParameter("property", prop))
+		parameters = append(parameters, NewParameter("properties", prop))
 	}
 
 	return parameters
@@ -147,9 +150,15 @@ func (api *Deals) convertListResponse(response map[string]interface{}) *PageResp
 		pr.Offset = cast.ToInt64(response["offset"])
 	}
 
-	deals, ok := response["deals"].([]map[string]interface{})
+	deals, ok := response["deals"].([]interface{})
 	if ok {
-		for _, deal := range deals {
+
+		for _, dealobj := range deals {
+			deal, ok := dealobj.(map[string]interface{})
+			if !ok {
+				return nil
+			}
+
 			pr.Data = append(pr.Data, api.toEntity(deal))
 		}
 	}
@@ -158,8 +167,8 @@ func (api *Deals) convertListResponse(response map[string]interface{}) *PageResp
 }
 
 // List - lists a page of deals from hubspot
-func (api *Deals) List(page *Page, props ...string) (*PageResponse, error) {
-	response, err := api.rest.Get("deals/v1/deal/paged", api.getListParameters(page, "limit", props)...)
+func (api *Deals) List(page *Page, includeassociations bool, props ...string) (*PageResponse, error) {
+	response, err := api.rest.Get("deals/v1/deal/paged", api.getListParameters(page, "limit", includeassociations, props)...)
 	if err != nil {
 		return nil, err
 	}
@@ -168,8 +177,8 @@ func (api *Deals) List(page *Page, props ...string) (*PageResponse, error) {
 }
 
 // RecentlyModified - lists a page of recently modified deals
-func (api *Deals) RecentlyModified(page *Page, since *time.Time) (*PageResponse, error) {
-	response, err := api.rest.Get("deals/v1/deal/recent/modified", api.getListParameters(page, "count", nil)...)
+func (api *Deals) RecentlyModified(page *Page, since *time.Time, includeassociations bool) (*PageResponse, error) {
+	response, err := api.rest.Get("deals/v1/deal/recent/modified", api.getListParameters(page, "count", includeassociations, nil)...)
 	if err != nil {
 		return nil, err
 	}
@@ -178,8 +187,8 @@ func (api *Deals) RecentlyModified(page *Page, since *time.Time) (*PageResponse,
 }
 
 // RecentlyCreated - lists a page of recently created deals
-func (api *Deals) RecentlyCreated(page *Page, since *time.Time) (*PageResponse, error) {
-	response, err := api.rest.Get("deals/v1/deal/recent/created", api.getListParameters(page, "count", nil)...)
+func (api *Deals) RecentlyCreated(page *Page, since *time.Time, includeassociations bool) (*PageResponse, error) {
+	response, err := api.rest.Get("deals/v1/deal/recent/created", api.getListParameters(page, "count", includeassociations, nil)...)
 	if err != nil {
 		return nil, err
 	}
