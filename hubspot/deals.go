@@ -18,6 +18,7 @@ type IDeals interface {
 	RecentlyCreated(page *Page, since *time.Time, includeassociations bool) (*PageResponse, error)
 	Delete(id int64) error
 	Get(id int64) (interface{}, error)
+	Query() IQuery
 }
 
 // Deals - rest implementation of hubspot deals api
@@ -31,6 +32,26 @@ func NewDeals(rest IRestClient, model *Model) *Deals {
 	return &Deals{
 		rest:  rest,
 		model: model}
+}
+
+func (api *Deals) toEntityQuery(response map[string]interface{}) interface{} {
+	entity := reflect.New(api.model.datatype)
+	entity = entity.Elem()
+
+	if api.model.id != nil {
+		api.model.id.SetValue(response, "id", entity)
+	}
+
+	properties, ok := response["properties"].(map[string]interface{})
+	if !ok {
+		return entity.Addr().Interface()
+	}
+
+	for _, prop := range api.model.properties {
+		prop.SetValue(properties, prop.HubspotName, entity)
+	}
+
+	return entity.Addr().Interface()
 }
 
 func (api *Deals) toEntity(response map[string]interface{}) interface{} {
@@ -208,4 +229,13 @@ func (api *Deals) Get(id int64) (interface{}, error) {
 		return nil, err
 	}
 	return api.toEntity(response), nil
+}
+
+// Query - searches for deals by criterias
+func (api *Deals) Query() IQuery {
+	return &Query{
+		rest:    api.rest,
+		url:     "crm/v3/objects/deals/search",
+		creator: api.toEntityQuery,
+	}
 }

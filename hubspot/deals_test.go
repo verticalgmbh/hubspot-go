@@ -178,6 +178,22 @@ var responseDealCreate string = `{
 	}
   }`
 
+const responseDealQuery string = `{
+	"results":[{
+		"archived":false,
+		"createdAt":"2020-03-23T11:04:05.202Z",
+		"id":1775411525,
+		"properties":{
+			"amount": "142.00",
+			"closedate":"2020-03-23T11:03:59.695Z",
+			"dealname":"vertical GmbH (Lukass Maceks)",
+			"dealstage":"closedwon",
+			"pipeline":"default"
+		},
+		"updatedAt":"2020-03-23T11:04:06.427Z"
+	}],
+	"total":1}`
+
 type Deal struct {
 	ID        int64     `hubspot:"id"`
 	IsDeleted bool      `hubspot:"deleted"`
@@ -213,4 +229,39 @@ func TestDealCreate(t *testing.T) {
 	require.Equal(t, 0, deal.CloseDate.Second())
 
 	require.Equal(t, 1, len(deal.Contacts))
+}
+
+func TestDealQuery(t *testing.T) {
+	rest := &TestRest{Response: readTestResponse(responseDealQuery)}
+	api := NewDeals(rest, NewModel(reflect.TypeOf(Deal{})))
+
+	query := api.Query()
+	query.Where(Equals("dealname", "vertical GmbH (Lukass Maceks)"))
+
+	response, err := query.Execute(nil)
+	require.NoError(t, err)
+
+	require.Equal(t, "POST crm/v3/objects/deals/search?hapikey=xyz", rest.LastRequest())
+
+	body := rest.LastBody().(*QueryData)
+	require.NotNil(t, body)
+	require.Equal(t, 1, len(body.Filters))
+	filter := body.Filters[0]
+	require.Equal(t, "dealname", filter.PropertyName)
+	require.Equal(t, "EQ", filter.Operator)
+	require.Equal(t, "vertical GmbH (Lukass Maceks)", filter.Value)
+
+	require.Equal(t, 1, len(response.Data))
+
+	deal, ok := response.Data[0].(*Deal)
+	require.True(t, ok)
+	require.Equal(t, "vertical GmbH (Lukass Maceks)", deal.Name)
+	require.Equal(t, int64(1775411525), deal.ID)
+	require.Equal(t, "closedwon", deal.Stage)
+	require.Equal(t, 2020, deal.CloseDate.Year())
+	require.Equal(t, time.Month(3), deal.CloseDate.Month())
+	require.Equal(t, 23, deal.CloseDate.Day())
+	require.Equal(t, 11, deal.CloseDate.Hour())
+	require.Equal(t, 3, deal.CloseDate.Minute())
+	require.Equal(t, 59, deal.CloseDate.Second())
 }
