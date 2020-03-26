@@ -6,6 +6,7 @@ import "fmt"
 type ITickets interface {
 	Create(ticket interface{}) (interface{}, error)
 	Get(id int64) (interface{}, error)
+	Query() IQuery
 }
 
 // Tickets - access to tickets-api using rest
@@ -38,4 +39,12 @@ func (api *Tickets) Get(id int64) (interface{}, error) {
 	}
 
 	return propertiesToEntity(response, api.model), nil
+}
+
+// Query - creates a query usable to search for contacts
+func (api *Tickets) Query() IQuery {
+	return &Query{
+		model: api.model,
+		url:   "crm/v3/objects/tickets/search",
+		rest:  api.rest}
 }

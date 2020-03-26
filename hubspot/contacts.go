@@ -15,6 +15,7 @@ type IContacts interface {
 	ListPage(page *Page, props ...string) (*PageResponse, error)
 	GetByID(id int64) (interface{}, error)
 	GetByEmail(email string) (interface{}, error)
+	Query() IQuery
 }
 
 // Contacts - hubspot contacts api
@@ -140,4 +141,12 @@ func (api *Contacts) ListPage(page *Page, props ...string) (*PageResponse, error
 	}
 
 	return pr, nil
+}
+
+// Query - creates a query usable to search for contacts
+func (api *Contacts) Query() IQuery {
+	return &Query{
+		model: api.model,
+		url:   "crm/v3/objects/contacts/search",
+		rest:  api.rest}
 }

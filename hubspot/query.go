@@ -1,6 +1,8 @@
 package hubspot
 
 import (
+	"reflect"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 )
@@ -21,6 +23,8 @@ type FilterGroup struct {
 
 // QueryData - data send to a hubspot query endpoint
 type QueryData struct {
+	Limit int    `json:"limit,omitempty"`
+	After string `json:"after,omitempty"`
 
 	// filters and filtergroups are mutually exclusive properties
 	Filters      []*Filter      `json:"filters,omitempty"`
@@ -35,11 +39,31 @@ type IQuery interface {
 
 // Query - a query for data in hubspot
 type Query struct {
-	url     string                                   // url to post query to
-	rest    IRestClient                              // rest client used to post query
-	creator func(map[string]interface{}) interface{} // creates entities to return
+	model *Model
+	url   string      // url to post query to
+	rest  IRestClient // rest client used to post query
 
 	filter []*FilterGroup // filter groups to send
+}
+
+func (q *Query) toEntity(response map[string]interface{}) interface{} {
+	entity := reflect.New(q.model.datatype)
+	entity = entity.Elem()
+
+	if q.model.id != nil {
+		q.model.id.SetValue(response, "id", entity)
+	}
+
+	properties, ok := response["properties"].(map[string]interface{})
+	if !ok {
+		return entity.Addr().Interface()
+	}
+
+	for _, prop := range q.model.properties {
+		prop.SetValue(properties, prop.HubspotName, entity)
+	}
+
+	return entity.Addr().Interface()
 }
 
 // Where - specifies a filter to query for
@@ -56,6 +80,13 @@ func (q *Query) Execute(page *Page) (*PageResponse, error) {
 			query.Filters = q.filter[0].Filters
 		} else {
 			query.FilterGroups = q.filter
+		}
+	}
+
+	if page != nil {
+		query.Limit = page.Count
+		if page.Offset > 0 {
+			query.After = cast.ToString(page.Offset)
 		}
 	}
 
@@ -83,7 +114,7 @@ func (q *Query) Execute(page *Page) (*PageResponse, error) {
 				return nil, errors.Errorf("Unexpected response structure from hubspot")
 			}
 
-			pr.Data = append(pr.Data, q.creator(objdata))
+			pr.Data = append(pr.Data, q.toEntity(objdata))
 		}
 	}
 

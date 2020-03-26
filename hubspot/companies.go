@@ -19,6 +19,7 @@ type ICompanies interface {
 	SearchByDomain(domain string, page *Page, props ...string) (*PageResponse, error)
 	Delete(id int64) error
 	Get(id int64) (interface{}, error)
+	Query() IQuery
 }
 
 // Companies - access to companies api of hubspot using http
@@ -247,4 +248,12 @@ func (api *Companies) Get(id int64) (interface{}, error) {
 	}
 
 	return api.toEntity(response), nil
+}
+
+// Query - creates a query usable to search for contacts
+func (api *Companies) Query() IQuery {
+	return &Query{
+		model: api.model,
+		url:   "crm/v3/objects/companies/search",
+		rest:  api.rest}
 }

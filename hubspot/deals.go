@@ -34,26 +34,6 @@ func NewDeals(rest IRestClient, model *Model) *Deals {
 		model: model}
 }
 
-func (api *Deals) toEntityQuery(response map[string]interface{}) interface{} {
-	entity := reflect.New(api.model.datatype)
-	entity = entity.Elem()
-
-	if api.model.id != nil {
-		api.model.id.SetValue(response, "id", entity)
-	}
-
-	properties, ok := response["properties"].(map[string]interface{})
-	if !ok {
-		return entity.Addr().Interface()
-	}
-
-	for _, prop := range api.model.properties {
-		prop.SetValue(properties, prop.HubspotName, entity)
-	}
-
-	return entity.Addr().Interface()
-}
-
 func (api *Deals) toEntity(response map[string]interface{}) interface{} {
 	entity := reflect.New(api.model.datatype)
 	entity = entity.Elem()
@@ -234,8 +214,7 @@ func (api *Deals) Get(id int64) (interface{}, error) {
 // Query - searches for deals by criterias
 func (api *Deals) Query() IQuery {
 	return &Query{
-		rest:    api.rest,
-		url:     "crm/v3/objects/deals/search",
-		creator: api.toEntityQuery,
-	}
+		model: api.model,
+		rest:  api.rest,
+		url:   "crm/v3/objects/deals/search"}
 }
