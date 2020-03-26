@@ -1,12 +1,15 @@
 package hubspot
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"github.com/spf13/cast"
+)
 
 // Filter - a filter for a property
 // filters are combined using AND by hubspot
 type Filter struct {
 	PropertyName string      `json:"propertyName"`
-	Operator     string      `json:"propertyName"`
+	Operator     string      `json:"operator"`
 	Value        interface{} `json:"value,omitempty"`
 }
 
@@ -63,10 +66,14 @@ func (q *Query) Execute(page *Page) (*PageResponse, error) {
 
 	pr := new(PageResponse)
 
-	/*paging,ok:=response["paging"].(map[string]interface{})
+	paging, ok := response["paging"].(map[string]interface{})
 	if ok {
-
-	}*/
+		nextrp, ok := paging["next"].(map[string]interface{})
+		if ok {
+			pr.HasMore = true
+			pr.Offset = cast.ToInt64(nextrp["after"])
+		}
+	}
 
 	results, ok := response["results"].([]interface{})
 	if ok {
