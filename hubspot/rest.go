@@ -6,11 +6,15 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 )
 
 var httpclient http.Client
+
+const defaultquota = time.Duration(float64(time.Second) * 1.05)
 
 // Parameter - parameter for a rest client
 type Parameter struct {
@@ -24,12 +28,17 @@ type IRestClient interface {
 	Put(url string, request interface{}, params ...*Parameter) (map[string]interface{}, error)
 	Delete(url string) error
 	Get(url string, params ...*Parameter) (map[string]interface{}, error)
+	BeginQuota()
+	EndQuota()
 }
 
 // RestClient - client used to send rest requests to hubspot
 type RestClient struct {
-	apikey  string
-	address string
+	apikey    string
+	address   string
+	quotatime time.Duration // time to wait between quota calls
+	lastquota time.Time     // time when the last quota request was sent
+	mutex     sync.Mutex    // mutex used to sync quota calls
 }
 
 // NewParameter - creates a new parameter
@@ -42,8 +51,9 @@ func NewParameter(key string, value string) *Parameter {
 // NewRest - creates a new rest client
 func NewRest(address string, apikey string) *RestClient {
 	return &RestClient{
-		address: address,
-		apikey:  apikey}
+		address:   address,
+		apikey:    apikey,
+		quotatime: defaultquota}
 }
 
 func (client *RestClient) buildBaseURL(address string, params ...*Parameter) *strings.Builder {
@@ -181,4 +191,24 @@ func (client *RestClient) Delete(address string) error {
 	}
 
 	return client.checkError(response)
+}
+
+// BeginQuota - starts a quota call and waits until the next call is valid
+// Always call EndQuota after a call to BeginQuota since sync involves a mutex which would
+// deadlock otherwise
+// this is used for queries since currently they are rate limited to 1 query per second
+func (client *RestClient) BeginQuota() {
+	client.mutex.Lock()
+
+	now := time.Now().UTC()
+	diff := now.Sub(client.lastquota)
+	if diff < client.quotatime {
+		time.Sleep(client.quotatime - diff)
+	}
+}
+
+// EndQuota - ends a quota call
+func (client *RestClient) EndQuota() {
+	client.lastquota = time.Now().UTC()
+	client.mutex.Unlock()
 }

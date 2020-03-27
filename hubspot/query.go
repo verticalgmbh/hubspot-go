@@ -34,6 +34,7 @@ type QueryData struct {
 
 	Properties []string `json:"properties,omitempty"` // properties to return
 	Sorts      []*Sort  `json:"sorts,omitempty"`
+	Text       string   `json:"query,omitempty"`
 
 	// filters and filtergroups are mutually exclusive properties
 	Filters      []*Filter      `json:"filters,omitempty"`
@@ -55,6 +56,7 @@ type Query struct {
 	url        string         // url to post query to
 	rest       IRestClient    // rest client used to post query
 	properties []string       // properties to return
+	text       string         // full text search
 	filter     []*FilterGroup // filter groups to send
 	sorts      []*Sort        // sort criterias
 }
@@ -80,8 +82,27 @@ func (q *Query) toEntity(response map[string]interface{}) interface{} {
 }
 
 // Where - specifies a filter to query for
+// Use the following methods to create filters
+//   Equal            - property has to be equal to a value
+//   NotEqual         - property must not equal a value
+//   Less             - property has to be less than a value
+//   LessEqual        - property has to be less or equal to a value
+//   Greater          - property has to be greater than a value
+//   GreaterEqual     - property has to be greater or equal to a value
+//   HasProperty      - object has to contain a property
+//   NotHasProperty   - object must not contain a property (value)
+//   ContainsToken    - object must contain a token
+//   NotContainsToken - object must not contain a token
+//
+// All filters in a single call are combined using AND. Every following call is combined with OR to the other calls.
 func (q *Query) Where(filters ...*Filter) IQuery {
 	q.filter = append(q.filter, &FilterGroup{Filters: filters})
+	return q
+}
+
+// Text - specifies a text to query for in all properties
+func (q *Query) Text(text string) IQuery {
+	q.text = text
 	return q
 }
 
@@ -131,7 +152,10 @@ func (q *Query) Execute(page *Page) (*PageResponse, error) {
 		query.Sorts = q.sorts
 	}
 
+	q.rest.BeginQuota()
 	response, err := q.rest.Post(q.url, query)
+	q.rest.EndQuota()
+
 	if err != nil {
 		return nil, err
 	}
