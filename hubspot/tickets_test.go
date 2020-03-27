@@ -207,6 +207,7 @@ var responseTicketGet string = `{
   }`
 
 type TestTicket struct {
+	ID       int64  `hubspot:"id"`
 	Subject  string `hubspot:"name=subject"`
 	Text     string `hubspot:"name=content"`
 	Pipeline int    `hubspot:"name=hs_pipeline"`
@@ -240,6 +241,7 @@ func TestTicketCreate(t *testing.T) {
 	createdticket := created.(*TestTicket)
 	require.Equal(t, ticket.Subject, createdticket.Subject)
 	require.Equal(t, ticket.Text, createdticket.Text)
+	require.NotEqual(t, int64(0), createdticket.ID)
 }
 
 func TestTicketGet(t *testing.T) {
@@ -256,4 +258,5 @@ func TestTicketGet(t *testing.T) {
 	require.Equal(t, "These are the details of the ticket.", createdticket.Text)
 	require.Equal(t, 0, createdticket.Pipeline)
 	require.Equal(t, 4, createdticket.Stage)
+	require.NotEqual(t, int64(0), createdticket.ID)
 }
