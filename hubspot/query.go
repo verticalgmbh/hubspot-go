@@ -21,12 +21,19 @@ type FilterGroup struct {
 	Filters []*Filter `json:"filters"`
 }
 
+// Sort - sort critera for a query
+type Sort struct {
+	Property  string `json:"propertyName"`
+	Direction string `json:"direction"`
+}
+
 // QueryData - data send to a hubspot query endpoint
 type QueryData struct {
 	Limit int    `json:"limit,omitempty"`
 	After string `json:"after,omitempty"`
 
 	Properties []string `json:"properties,omitempty"` // properties to return
+	Sorts      []*Sort  `json:"sorts,omitempty"`
 
 	// filters and filtergroups are mutually exclusive properties
 	Filters      []*Filter      `json:"filters,omitempty"`
@@ -37,6 +44,8 @@ type QueryData struct {
 type IQuery interface {
 	Where(filter ...*Filter) IQuery
 	Properties(props ...string) IQuery
+	Ascending(property string) IQuery
+	Descending(property string) IQuery
 	Execute(*Page) (*PageResponse, error)
 }
 
@@ -47,6 +56,7 @@ type Query struct {
 	rest       IRestClient    // rest client used to post query
 	properties []string       // properties to return
 	filter     []*FilterGroup // filter groups to send
+	sorts      []*Sort        // sort criterias
 }
 
 func (q *Query) toEntity(response map[string]interface{}) interface{} {
@@ -83,6 +93,18 @@ func (q *Query) Properties(props ...string) IQuery {
 	return q
 }
 
+// Ascending - creates a sort criteria in ascending order
+func (q *Query) Ascending(property string) IQuery {
+	q.sorts = append(q.sorts, &Sort{Property: property, Direction: "ASCENDING"})
+	return q
+}
+
+// Descending - creates a sort criteria in descending order
+func (q *Query) Descending(property string) IQuery {
+	q.sorts = append(q.sorts, &Sort{Property: property, Direction: "DESCENDING"})
+	return q
+}
+
 // Execute - executes the query and returns the result
 func (q *Query) Execute(page *Page) (*PageResponse, error) {
 	query := &QueryData{}
@@ -103,6 +125,10 @@ func (q *Query) Execute(page *Page) (*PageResponse, error) {
 
 	if len(q.properties) > 0 {
 		query.Properties = q.properties
+	}
+
+	if len(q.sorts) > 0 {
+		query.Sorts = q.sorts
 	}
 
 	response, err := q.rest.Post(q.url, query)
