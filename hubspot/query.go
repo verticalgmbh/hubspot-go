@@ -26,6 +26,8 @@ type QueryData struct {
 	Limit int    `json:"limit,omitempty"`
 	After string `json:"after,omitempty"`
 
+	Properties []string `json:"properties,omitempty"` // properties to return
+
 	// filters and filtergroups are mutually exclusive properties
 	Filters      []*Filter      `json:"filters,omitempty"`
 	FilterGroups []*FilterGroup `json:"filterGroups,omitempty"`
@@ -34,16 +36,17 @@ type QueryData struct {
 // IQuery - query for crm data
 type IQuery interface {
 	Where(filter ...*Filter) IQuery
+	Properties(props ...string) IQuery
 	Execute(*Page) (*PageResponse, error)
 }
 
 // Query - a query for data in hubspot
 type Query struct {
-	model *Model
-	url   string      // url to post query to
-	rest  IRestClient // rest client used to post query
-
-	filter []*FilterGroup // filter groups to send
+	model      *Model
+	url        string         // url to post query to
+	rest       IRestClient    // rest client used to post query
+	properties []string       // properties to return
+	filter     []*FilterGroup // filter groups to send
 }
 
 func (q *Query) toEntity(response map[string]interface{}) interface{} {
@@ -72,6 +75,14 @@ func (q *Query) Where(filters ...*Filter) IQuery {
 	return q
 }
 
+// Properties - specified properties to return in result objects
+// if this is not specified only a default set of properties is returned
+// for every object
+func (q *Query) Properties(props ...string) IQuery {
+	q.properties = props
+	return q
+}
+
 // Execute - executes the query and returns the result
 func (q *Query) Execute(page *Page) (*PageResponse, error) {
 	query := &QueryData{}
@@ -88,6 +99,10 @@ func (q *Query) Execute(page *Page) (*PageResponse, error) {
 		if page.Offset > 0 {
 			query.After = cast.ToString(page.Offset)
 		}
+	}
+
+	if len(q.properties) > 0 {
+		query.Properties = q.properties
 	}
 
 	response, err := q.rest.Post(q.url, query)
