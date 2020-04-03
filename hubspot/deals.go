@@ -101,7 +101,7 @@ func (api *Deals) Create(deal interface{}) (interface{}, error) {
 // Update - updates data of a deal
 func (api *Deals) Update(id int64, deal interface{}) (interface{}, error) {
 	request := createPropertiesRequest(deal, "name", api.model)
-	response, err := api.rest.Post(fmt.Sprintf("deals/v1/deal/%d", id), request)
+	response, err := api.rest.Put(fmt.Sprintf("deals/v1/deal/%d", id), request)
 	if err != nil {
 		return nil, err
 	}
