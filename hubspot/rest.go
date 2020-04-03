@@ -89,6 +89,10 @@ func (client *RestClient) checkError(response *http.Response) error {
 }
 
 func (client *RestClient) readResponse(response *http.Response) (map[string]interface{}, error) {
+	if response.StatusCode == 204 {
+		return nil, nil
+	}
+
 	if response.ContentLength != 0 {
 		jresponse := make(map[string]interface{})
 		decoder := json.NewDecoder(response.Body)
